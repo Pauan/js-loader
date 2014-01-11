@@ -122,7 +122,9 @@ Bundle.prototype.asString = function (sCode, sMap, f) {
     map.setSourceContent(x.name, x.source)
   })
 
-  var code = self.modules.map(function (x) {
+  var code = fs.readFileSync(path.join(__dirname, "require.js"), { encoding: "utf8" })
+
+  code += "\n" + self.modules.map(function (x) {
     var s = x.code + "\n//# sourceURL=" + x.name
     if (x.map != null) {
       // TODO this is hacky, but it seems to be the only way...
