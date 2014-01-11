@@ -1,3 +1,12 @@
+How to install
+==============
+
+::
+  
+  git clone https://github.com/Pauan/js-loader
+  cd js-loader
+  npm install
+
 What is it?
 ===========
 
@@ -33,18 +42,24 @@ Example
 Let's say you had these files:
 
 * foo.js
+
 ::
+
   var bar = require("./bar")
   exports.foo = bar + 20
 
 * foo.js.map
+
 ::
 
 * bar.js
+
 ::
+
   var bar = 10
 
 * bar.js.map
+
 ::
 
 
@@ -72,9 +87,11 @@ You could combine them together like this::
 And the output is::
 
 * bundle.js
+
 ::
 
 * bundle.js.map
+
 ::
 
 You can then include ``<script src="bundle.js"></script>`` in your HTML page, which will Just Work(tm), including with source maps.

@@ -27,6 +27,10 @@ var types = {
 
 // TODO typeof checking for module argument
 Bundle.prototype.add = function (type, module, options) {
+  if (options == null) {
+    options = {}
+  }
+
   if (!(type in types)) {
     throw new Error("expected " + Object.keys(types).join(", ") + " but got " + type)
   }
