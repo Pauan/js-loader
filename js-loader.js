@@ -9,6 +9,10 @@ function escapeString(s) {
   return "\"" + s.replace(/[\\\"]/g, "\\$&").replace(/\n/g, "\\n") + "\""
 }
 
+function relative(x, y) {
+  return path.relative(path.dirname(y), x)
+}
+
 function Bundle() {
   this.modules    = []
   this.requires   = []
@@ -25,7 +29,6 @@ var types = {
   }
 }
 
-// TODO typeof checking for module argument
 Bundle.prototype.add = function (type, module, options) {
   if (options == null) {
     options = {}
@@ -35,16 +38,8 @@ Bundle.prototype.add = function (type, module, options) {
     throw new Error("expected " + Object.keys(types).join(", ") + " but got " + type)
   }
 
-  if (options.file != null && options.code != null) {
-    throw new Error("cannot use both file and code properties at the same time")
-  }
-  if (options.map != null && options.mapFile != null) {
-    throw new Error("cannot use both map and mapFile properties at the same time")
-  }
-
   var file   = options.file
     , code   = options.code
-    , map    = options.map
     , source = options.source
 
   if (file == null) {
@@ -53,26 +48,37 @@ Bundle.prototype.add = function (type, module, options) {
   if (code == null) {
     code = fs.readFileSync(file, { encoding: "utf8" })
   }
-  if (typeof code !== "string") {
-    throw new Error("the code property must be a string")
-  }
-
-  if (map == null) {
-    if (options.mapFile != null) {
-      map = fs.readFileSync(options.mapFile, { encoding: "utf8" })
-    }
-  }
 
   if (source == null) {
-    source = code
+    source = {}
+  }
+  if (source.file == null) {
+    source.file = file
+  }
+  if (source.code == null) {
+    source.code = fs.readFileSync(source.file, { encoding: "utf8" })
+  }
+
+  // source.map is optional
+  if (source.map != null) {
+    if (source.map.file == null && source.map.code == null) {
+      throw new Error("if `source.map` is used, it must have a `source.map.file` and/or `source.map.code` property")
+    }
+    if (source.map.code == null) {
+      source.map.code = fs.readFileSync(source.map.file, { encoding: "utf8" })
+    }
+    if (typeof source.map.code === "string") {
+      // Strip )]} at the beginning, as per the spec
+      source.map.code = JSON.parse(source.map.code.replace(/^\)\]\}[^\n]*(?:\n|$)/, ""))
+    }
   }
 
   this.modules.push({
     type: type,
     name: module,
-    source: source,
+    file: file,
     code: code,
-    map: map
+    source: source
   })
 }
 
@@ -94,7 +100,7 @@ Bundle.prototype.writeFiles = function (sCode, sMap) {
 Bundle.prototype.asString = function (sCode, sMap, f) {
   var self = this
 
-  var map = new sourceMap.SourceMapGenerator({ file: sCode/*, sourceRoot: options.sourceRoot*/ })
+  var output = new sourceMap.SourceMapGenerator({ file: sCode/*, sourceRoot: options.sourceRoot*/ })
 
   self.modules.forEach(function (x) {
     if (self.transforms.length) {
@@ -103,33 +109,36 @@ Bundle.prototype.asString = function (sCode, sMap, f) {
       })
     }
 
-    // map is optional
-    if (x.map != null) {
+    if (x.source.map != null) {
+      var input = new sourceMap.SourceMapConsumer(x.source.map.code)
       //map.applySourceMap(new sourceMap.SourceMapConsumer(x.map), x.name)
-      new sourceMap.SourceMapConsumer(x.map).eachMapping(function (m) {
-        // TODO
-        if (m.originalLine) {
-          map.addMapping({
-            generated: { line: m.generatedLine, column: m.generatedColumn },
-            original:  { line: m.originalLine,  column: m.originalColumn  },
-            source:    x.name,
-            name:      m.name
-          })
-        }
+      // TODO should only iterate over the mappings for the first file...?
+      input.eachMapping(function (m) {
+        // TODO should check (m.source === relative(x.source.file, x.source.map.file)) ?
+        output.addMapping({
+          generated: { line: m.generatedLine, column: m.generatedColumn },
+          original:  { line: m.originalLine,  column: m.originalColumn  },
+          source:    x.source.file, // TODO m.source ?
+          name:      m.name
+        })
       })
-    }
 
-    map.setSourceContent(x.name, x.source)
+      output.setSourceContent(x.source.file, x.source.code)
+    }
   })
 
   var code = fs.readFileSync(path.join(__dirname, "require.js"), { encoding: "utf8" })
 
   code += "\n" + self.modules.map(function (x) {
-    var s = x.code + "\n//# sourceURL=" + x.name
-    if (x.map != null) {
+    // TODO shouldn't remove //@ and //# inside strings
+    // .replace(/\/\/[@#] *(?:sourceURL|sourceMappingURL)=[^\n]*(?:\n|$)/g, "")
+    var s = x.code + "\n//# sourceURL=" + x.source.file
+
+    if (x.source.map != null) {
       // TODO this is hacky, but it seems to be the only way...
-      s += "\n//# sourceMappingURL=" + path.relative(path.dirname(x.name), sMap)
+      s += "\n//# sourceMappingURL=" + relative(sMap, x.source.file)
     }
+
     return types[x.type](escapeString(x.name), escapeString(s))
   }).join("\n")
 
@@ -139,5 +148,5 @@ Bundle.prototype.asString = function (sCode, sMap, f) {
     }).join("\n")
   }
 
-  f(code, ")]}\n" + map)
+  f(code, ")]}\n" + output)
 }
