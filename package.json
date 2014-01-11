@@ -1,0 +1,17 @@
+{
+  "private": true,
+  "name": "js-loader",
+  "description": "A tool that makes it easier to package CommonJS modules into a single script for the browser.",
+  "license": "MIT",
+  "version": "1.0.0",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/Pauan/js-loader.git"
+  },
+  "bugs": {
+    "url": "https://github.com/Pauan/js-loader/issues"
+  },
+  "dependencies": {
+    "source-map": "~0.1.31",
+  }
+}
