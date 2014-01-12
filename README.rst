@@ -195,7 +195,7 @@ You can then include ``<script src="bundle.js"></script>`` in your HTML page, wh
 
 *Note:* the above does not do any minification. You can use ``bundle.transform`` to transform the individual files (e.g. minify them):
 
-.. code::javascript
+.. code:: javascript
 
   bundle.transform(function (x) {
     x.type             // Module type, the 1st argument to `add`
@@ -213,7 +213,7 @@ You should also minify the ``bundle.js`` file, and gzip it (probably using Uglif
 
 If you prefer to work with JavaScript code as strings (rather than as files), you can do this instead:
 
-.. code::javascript
+.. code:: javascript
 
   bundle.add("commonjs", "foo", {
     code: "...",     // Compiled JavaScript code as a string
