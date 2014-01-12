@@ -13,10 +13,24 @@ function relative(x, y) {
   return path.relative(path.dirname(y), x)
 }
 
-function Bundle() {
+function Bundle(options) {
+  if (options == null) {
+    options = {}
+  }
+  if (options.file == null) {
+    throw new Error("options.file must be provided")
+  }
+  if (options.map == null) {
+    throw new Error("options.map must be provided")
+  }
+  if (options.prefix == null) {
+    options.prefix = ""
+  }
+
   this.modules    = []
   this.requires   = []
   this.transforms = []
+  this.options    = options
 }
 exports.Bundle = Bundle
 
@@ -29,6 +43,7 @@ var types = {
   }
 }
 
+// TODO maybe rename to `set` ?
 Bundle.prototype.add = function (type, module, options) {
   if (options == null) {
     options = {}
@@ -42,18 +57,25 @@ Bundle.prototype.add = function (type, module, options) {
     , code   = options.code
     , source = options.source
 
-  if (file == null) {
-    file = module + ".js"
-  }
-  if (code == null) {
-    code = fs.readFileSync(file, { encoding: "utf8" })
-  }
-
   if (source == null) {
     source = {}
   }
+
+  if (file == null) {
+    file = module + ".js"
+  }
   if (source.file == null) {
     source.file = file
+  }
+
+  file        = path.join(this.options.prefix, file)
+  source.file = path.join(this.options.prefix, source.file)
+  if (source.map != null && source.map.file != null) {
+    source.map.file = path.join(this.options.prefix, source.map.file)
+  }
+
+  if (code == null) {
+    code = fs.readFileSync(file, { encoding: "utf8" })
   }
   if (source.code == null) {
     source.code = fs.readFileSync(source.file, { encoding: "utf8" })
@@ -90,17 +112,16 @@ Bundle.prototype.transform = function (f) {
   this.transforms.push(f)
 }
 
-Bundle.prototype.writeFiles = function (sCode, sMap) {
-  this.asString(sCode, sMap, function (code, map) {
-    fs.writeFileSync(sCode, code)
-    fs.writeFileSync(sMap, map)
-  })
+Bundle.prototype.writeFiles = function () {
+  var o = this.get()
+  fs.writeFileSync(this.options.file, o.code)
+  fs.writeFileSync(this.options.map,  o.map)
 }
 
-Bundle.prototype.asString = function (sCode, sMap, f) {
+Bundle.prototype.get = function () {
   var self = this
 
-  var output = new sourceMap.SourceMapGenerator({ file: sCode/*, sourceRoot: options.sourceRoot*/ })
+  var output = new sourceMap.SourceMapGenerator({ file: self.options.file/*, sourceRoot: options.sourceRoot*/ })
 
   self.modules.forEach(function (x) {
     if (self.transforms.length) {
@@ -136,7 +157,7 @@ Bundle.prototype.asString = function (sCode, sMap, f) {
 
     if (x.source.map != null) {
       // TODO this is hacky, but it seems to be the only way...
-      s += "\n//# sourceMappingURL=" + relative(sMap, x.source.file)
+      s += "\n//# sourceMappingURL=" + relative(self.options.map, x.source.file)
     }
 
     return types[x.type](escapeString(x.name), escapeString(s))
@@ -148,5 +169,8 @@ Bundle.prototype.asString = function (sCode, sMap, f) {
     }).join("\n")
   }
 
-  f(code, ")]}\n" + output)
+  return {
+    code: code,
+    map: ")]}\n" + output
+  }
 }

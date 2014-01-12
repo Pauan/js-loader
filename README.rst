@@ -14,7 +14,7 @@ First I'll tell you what it's **not**:
 
 * It's not a new module system. Just use CommonJS or AMD or globals or whatever.
 
-* It's not a replacement for browserify.
+* It's not a replacement for `browserify <https://github.com/substack/node-browserify>`_.
 
 So, what is it, then? It's probably most accurate to call it a `transport format <http://wiki.commonjs.org/wiki/Modules/Transport>`_.
 
@@ -35,7 +35,7 @@ Some features:
 Example
 =======
 
-Let's say you had these files:
+Let's say you had these `CoffeeScript <http://coffeescript.org/>`_ files:
 
 * foo.coffee
 
@@ -53,7 +53,7 @@ Let's say you had these files:
     window.bar = (x) ->
       x + 20
 
-If you compile them using ``coffee -cm foo.coffee bar.coffee``, you get these files:
+If you compile them using ``coffee --compile --map foo.coffee bar.coffee``, you get these files:
 
 * foo.js
 
@@ -140,7 +140,9 @@ You can now combine them together like this:
 
   var loader = require("js-loader")
 
-  var bundle = new loader.Bundle()
+  // `file` is the filename for the bundled code
+  // `map`  is the filename for the bundled source map
+  var bundle = new loader.Bundle({ file: "bundle.js", map: "bundle.js.map" })
 
   // 1st argument is the type, which is either "commonjs" or "global"
   // 2nd argument is the module name
@@ -170,7 +172,7 @@ You can now combine them together like this:
   bundle.require("foo")
 
   // Writes the bundle to the file "bundle.js" and the source map to "bundle.js.map"
-  bundle.writeFiles("bundle.js", "bundle.js.map")
+  bundle.writeFiles()
 
 And the output is:
 
@@ -193,23 +195,25 @@ And the output is:
 
 You can then include ``<script src="bundle.js"></script>`` in your HTML page, which will Just Work(tm), including with source maps.
 
-*Note:* the above does not do any minification. You can use ``bundle.transform`` to transform the individual files (e.g. minify them):
+*Note:* the above does not do any minification. You can use the ``transform`` option to transform the individual files (e.g. minify them):
 
 .. code:: javascript
 
-  bundle.transform(function (x) {
-    x.type             // Module type, the 1st argument to `add`
-    x.name             // Module name, the 2nd argument to `add`
-    x.file             // Filename of JavaScript code
-    x.code             // JavaScript code as a string
-    x.source.file      // Filename of original code
-    x.source.code      // Original code as a string
-    x.source.map       // Source map; is undefined if the file doesn't have a source map
-    x.source.map.file  // Filename of source map
-    x.source.map.code  // Source map as a JSON object
+  var bundle = new loader.Bundle({
+    transform: function (x) {
+      x.type             // Module type, the 1st argument to `add`
+      x.name             // Module name, the 2nd argument to `add`
+      x.file             // Filename of JavaScript code
+      x.code             // JavaScript code as a string
+      x.source.file      // Filename of original code
+      x.source.code      // Original code as a string
+      x.source.map       // Source map; is undefined if the file doesn't have a source map
+      x.source.map.file  // Filename of source map
+      x.source.map.code  // Source map as a JSON object
+    }
   })
 
-You should also minify the ``bundle.js`` file, and gzip it (probably using UglifyJS and zlib). This will result in the smallest file size, for super fast downloading!
+You should also minify the ``bundle.js`` file and gzip it (probably using `UglifyJS <https://github.com/mishoo/UglifyJS2>`_ and `zlib <http://nodejs.org/api/zlib.html>`_). This will result in the smallest file size, for super fast downloading!
 
 If you prefer to work with JavaScript code as strings (rather than as files), you can do this instead:
 
@@ -225,11 +229,42 @@ If you prefer to work with JavaScript code as strings (rather than as files), yo
     }
   })
 
-  // Get the bundled code and source map as two strings
-  bundle.asString("bundle.js", "bundle.js.map", function (code, map) {
-    ...
-  })
+  var o = bundle.get()
+  o.code  // The bundle code as a string
+  o.map   // The bundle source map as a string
 
 If you use both a ``code`` and ``file`` property, the ``code`` property is used, and the ``file`` property is used *only* for debugging information.
 
 By working with JavaScript strings rather than files, you can write a compiler that targets JavaScript (e.g. CoffeeScript) and generate a single ``bundle.js`` file, without needing to create temporary files. The ``source.code`` property is especially useful for this, since it can be the original, uncompiled (non-JavaScript) code.
+
+Lastly, if all the JavaScript and map files are in the same subdirectory, you can use the ``prefix`` option as a convenience:
+
+.. code:: javascript
+
+  var bundle = new loader.Bundle({ prefix: "src" })
+
+  bundle.add("commonjs", "foo", {
+    file: "foo.js",
+    source: {
+      file: "foo.js",
+      map: {
+        file: "foo.map"
+      }
+    }
+  })
+
+The above is equivalent to this:
+
+.. code:: javascript
+
+  var bundle = new loader.Bundle({})
+
+  bundle.add("commonjs", "foo", {
+    file: "src/foo.js",
+    source: {
+      file: "src/foo.js",
+      map: {
+        file: "src/foo.map"
+      }
+    }
+  })
