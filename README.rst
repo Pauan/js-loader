@@ -57,7 +57,7 @@ Let's say you had these files:
     window.bar = (x) ->
       x + 20
 
-If you compile them using ``coffee -cm foo.coffee bar.coffee``, you get these files::
+If you compile them using ``coffee -cm foo.coffee bar.coffee``, you get these files:
 
 * foo.js
 
@@ -99,7 +99,7 @@ If you compile them using ``coffee -cm foo.coffee bar.coffee``, you get these fi
     */
 
 
-* foo.js.map
+* foo.map
 
   ::
 
@@ -114,7 +114,7 @@ If you compile them using ``coffee -cm foo.coffee bar.coffee``, you get these fi
       "mappings": ";AAAA;CAAA,EAAA,GAAA;;CAAA,CAAE,CAAQ,IAAA;;CAAV,CACA,CAAA,IAAO;CADP"
     }
 
-* bar.js.map
+* bar.map
 
   ::
 
@@ -172,7 +172,7 @@ You can now combine them together like this::
   // Writes the bundle to the file "bundle.js" and the source map to "bundle.js.map"
   bundle.writeFiles("bundle.js", "bundle.js.map")
 
-And the output is::
+And the output is:
 
 * bundle.js
 
@@ -207,7 +207,7 @@ You can then include ``<script src="bundle.js"></script>`` in your HTML page, wh
     x.source.map.code  // Source map as a JSON object
   })
 
-You should also minify the "bundle.js" file, and gzip it. This will result in the smallest file size, for super fast downloading!
+You should also minify the ``bundle.js`` file, and gzip it (probably using UglifyJS and zlib). This will result in the smallest file size, for super fast downloading!
 
 If you prefer to work with JavaScript code as strings (rather than as files), you can do this instead::
 
@@ -221,7 +221,7 @@ If you prefer to work with JavaScript code as strings (rather than as files), yo
     }
   })
 
-  // Get the combined code and source map as a string
+  // Get the bundled code and source map as two strings
   bundle.asString("bundle.js", "bundle.js.map", function (code, map) {
     ...
   })
