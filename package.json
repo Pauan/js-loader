@@ -3,7 +3,7 @@
   "name": "js-loader",
   "description": "A tool that makes it easier to package CommonJS modules into a single script for the browser.",
   "license": "MIT",
-  "version": "3.0.0",
+  "version": "3.0.1",
   "main": "js-loader",
   "repository": {
     "type": "git",

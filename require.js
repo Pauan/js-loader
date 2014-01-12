@@ -54,20 +54,21 @@ var require
           cache[s] = module.exports = {}
 
           var require = makeRequire(p.slice(0, -1)) // TODO is this correct ?
+            , value   = m.value
 
-          var x = (typeof m.value === "function"
-                    ? m.value.call(module.exports, require, module.exports, module)
-                    : new Function("require", "exports", "module", m.value).call(module.exports, require, module.exports, module))
-
-          // For Require.js style modules
-          if (typeof x !== "undefined") {
-            cache[s] = module.exports = x
+          if (typeof value === "string") {
+            // Can't use `new Function` because then the source mapping is incorrect in Chrome 33.0.1734.0 dev
+            // TODO Use top.eval ?
+            value = (0, eval)("(function (require, exports, module) {\n" + value + "\n})")
           }
+          value.call(module.exports, require, module.exports, module)
+
+          cache[s] = module.exports
 
         } else if (m.type === "global") {
-          // TODO call top.eval ?
-          (0, eval)(m.value)
           cache[s] = top
+          // TODO Use top.eval ?
+          (0, eval)(m.value)
 
         } else {
           throw new Error("invalid module type: " + m.type)
