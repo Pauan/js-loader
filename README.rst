@@ -12,7 +12,7 @@ What is it?
 
 First I'll tell you what it's **not**:
 
-* It's not a new module system. Just use CommonJS or AMD or globals or whatever.
+* It's not a new module system. Just use CommonJS or `AMD <http://requirejs.org/>`_ or globals or whatever.
 
 * It's not a replacement for `browserify <https://github.com/substack/node-browserify>`_.
 
@@ -125,7 +125,7 @@ If you compile them using ``coffee --compile --map foo.coffee bar.coffee``, you 
       "mappings": ";AAAA;CAAA,CAAA,CAAA,GAAM;CAAN"
     }
 
-In addition, you have an ordinary CommonJS file ``qux.js`` which does not have a source map, since it's just ordinary JavaScript:
+In addition, let's say you have an ordinary CommonJS file ``qux.js`` which does not have a source map, since it's just ordinary JavaScript:
 
 .. code:: javascript
 
@@ -134,7 +134,7 @@ In addition, you have an ordinary CommonJS file ``qux.js`` which does not have a
     return x + 30
   }
 
-You can now combine them together like this:
+You can combine them together like this:
 
 .. code:: javascript
 
@@ -237,7 +237,7 @@ If you use both a ``code`` and ``file`` property, the ``code`` property is used,
 
 By working with JavaScript strings rather than files, you can write a compiler that targets JavaScript (e.g. CoffeeScript) and generate a single ``bundle.js`` file, without needing to create temporary files. The ``source.code`` property is especially useful for this, since it can be the original, uncompiled (non-JavaScript) code.
 
-Lastly, if all the JavaScript and map files are in the same subdirectory, you can use the ``prefix`` option as a convenience:
+Lastly, if all the input (code and map) files are in the same subdirectory, you can use the ``prefix`` option as a convenience:
 
 .. code:: javascript
 
