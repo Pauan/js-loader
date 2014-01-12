@@ -24,7 +24,7 @@ It doesn't handle dependencies, it doesn't minify your files, it just takes Java
 
 Some features:
 
-* Modules are only parsed and evaluated when actually used, so the browser can load the JavaScript faster if you load modules on-demand.
+* Modules are only parsed and evaluated when actually used, so the browser can load the page faster if you ``require`` modules on-demand.
 
 * It can combine CommonJS code and code that uses global variables. AMD would be possible to support, but it would bloat up the loader a lot, so it's left out.
 
@@ -168,7 +168,7 @@ You can combine them together like this:
   // Bundle a CommonJS file that doesn't have a source map
   bundle.add("commonjs", "qux")
 
-  // The module that is automatically loaded when the script runs
+  // A module that is automatically loaded when the script runs
   bundle.require("foo")
 
   // Writes the bundle to the file "bundle.js" and the source map to "bundle.js.map"
