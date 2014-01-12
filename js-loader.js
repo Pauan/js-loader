@@ -27,10 +27,9 @@ function Bundle(options) {
     options.prefix = ""
   }
 
-  this.modules    = []
-  this.requires   = []
-  this.transforms = []
-  this.options    = options
+  this.modules  = []
+  this.requires = []
+  this.options  = options
 }
 exports.Bundle = Bundle
 
@@ -95,21 +94,23 @@ Bundle.prototype.add = function (type, module, options) {
     }
   }
 
-  this.modules.push({
+  var o = {
     type: type,
     name: module,
     file: file,
     code: code,
     source: source
-  })
+  }
+
+  if (this.options.transform != null) {
+    this.options.transform(o)
+  }
+
+  this.modules.push(o)
 }
 
 Bundle.prototype.require = function (module) {
   this.requires.push(module)
-}
-
-Bundle.prototype.transform = function (f) {
-  this.transforms.push(f)
 }
 
 Bundle.prototype.writeFiles = function () {
@@ -124,12 +125,6 @@ Bundle.prototype.get = function () {
   var output = new sourceMap.SourceMapGenerator({ file: self.options.file/*, sourceRoot: options.sourceRoot*/ })
 
   self.modules.forEach(function (x) {
-    if (self.transforms.length) {
-      self.transforms.forEach(function (f) {
-        f(x)
-      })
-    }
-
     if (x.source.map != null) {
       var input = new sourceMap.SourceMapConsumer(x.source.map.code)
       //map.applySourceMap(new sourceMap.SourceMapConsumer(x.map), x.name)
