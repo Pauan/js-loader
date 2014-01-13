@@ -33,10 +33,10 @@ function Bundle(options) {
 }
 exports.Bundle = Bundle
 
-function applySourceMap(minified, original) {
+function applySourceMap(minified, original, file) {
   var map = sourceMap.SourceMapGenerator.fromSourceMap(new sourceMap.SourceMapConsumer(minified))
-  map.applySourceMap(new sourceMap.SourceMapConsumer(original))
-  return map
+  map.applySourceMap(new sourceMap.SourceMapConsumer(original), file)
+  return "" + map
 }
 exports.applySourceMap = applySourceMap
 
