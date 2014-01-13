@@ -130,13 +130,16 @@ Bundle.prototype.get = function () {
       //map.applySourceMap(new sourceMap.SourceMapConsumer(x.map), x.name)
       // TODO should only iterate over the mappings for the first file...?
       input.eachMapping(function (m) {
-        // TODO should check (m.source === relative(x.source.file, x.source.map.file)) ?
-        output.addMapping({
-          generated: { line: m.generatedLine, column: m.generatedColumn },
-          original:  { line: m.originalLine,  column: m.originalColumn  },
-          source:    x.source.file, // TODO m.source ?
-          name:      m.name
-        })
+        // TODO hacky
+        if (m.originalLine) {
+          // TODO should check (m.source === relative(x.source.file, x.source.map.file)) ?
+          output.addMapping({
+            generated: { line: m.generatedLine, column: m.generatedColumn },
+            original:  { line: m.originalLine,  column: m.originalColumn  },
+            source:    x.source.file, // TODO m.source ?
+            name:      m.name
+          })
+        }
       })
 
       output.setSourceContent(x.source.file, x.source.code)
