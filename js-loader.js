@@ -1,6 +1,7 @@
 "use strict";
 
 var sourceMap = require("source-map")
+  , uglify    = require("uglify-js")
   , path      = require("path")
   , fs        = require("fs")
 
@@ -25,6 +26,12 @@ function Bundle(options) {
   }
   if (options.prefix == null) {
     options.prefix = ""
+  }
+  if (options.minify == null) {
+    options.minify = true
+  }
+  if (options.warn == null) {
+    options.warn = false
   }
 
   this.modules  = []
@@ -94,7 +101,7 @@ Bundle.prototype.add = function (type, module, options) {
     }
   }
 
-  var o = {
+  var x = {
     type: type,
     name: module,
     file: file,
@@ -102,11 +109,49 @@ Bundle.prototype.add = function (type, module, options) {
     source: source
   }
 
-  if (this.options.transform != null) {
-    this.options.transform(o)
+  if (this.options.minify) {
+    var ast = uglify.parse(x.code, {
+      filename: x.source.file
+    })
+
+    ast.figure_out_scope()
+    ast = ast.transform(uglify.Compressor({
+      warnings: this.options.warn
+    }))
+    ast.figure_out_scope()
+    ast.compute_char_frequency()
+
+    if (x.type === "commonjs") {
+      ast.mangle_names({
+        toplevel: true
+      })
+    } else if (x.type === "global") {
+      ast.mangle_names()
+    }
+
+    if (x.source.map == null) {
+      x.source.map = {}
+    }
+
+    var map = uglify.SourceMap({
+      orig: x.source.map.code
+    })
+
+    var stream = uglify.OutputStream({
+      source_map: map
+    })
+
+    ast.print(stream)
+
+    x.code            = "" + stream
+    x.source.map.code = JSON.parse("" + map)
   }
 
-  this.modules.push(o)
+  if (this.options.transform != null) {
+    this.options.transform(x)
+  }
+
+  this.modules.push(x)
 }
 
 Bundle.prototype.require = function (module) {
@@ -122,11 +167,23 @@ Bundle.prototype.writeFiles = function () {
 Bundle.prototype.get = function () {
   var self = this
 
-  var output = new sourceMap.SourceMapGenerator({ file: self.options.file/*, sourceRoot: options.sourceRoot*/ })
+  var output = {
+    version: 3,
+    file: self.options.file,
+    sections: []
+  }
+
+  var maps = {}
 
   self.modules.forEach(function (x) {
+    var output = maps[x.type]
+    if (output == null) {
+      output = maps[x.type] = new sourceMap.SourceMapGenerator({ file: self.options.file/*, sourceRoot: options.sourceRoot*/ })
+    }
+
     if (x.source.map != null) {
       var input = new sourceMap.SourceMapConsumer(x.source.map.code)
+
       //map.applySourceMap(new sourceMap.SourceMapConsumer(x.map), x.name)
       // TODO should only iterate over the mappings for the first file...?
       input.eachMapping(function (m) {
@@ -141,10 +198,31 @@ Bundle.prototype.get = function () {
           })
         }
       })
-
-      output.setSourceContent(x.source.file, x.source.code)
+    } else {
+      output.addMapping({
+        generated: { line: 1, column: 0 },
+        original:  { line: 1, column: 0 },
+        source:    x.source.file,
+      })
     }
+
+    // TODO if the original map has a sourceContents, should use that instead ?
+    output.setSourceContent(x.source.file, x.source.code)
   })
+
+  if (maps["global"] != null) {
+    output.sections.push({
+      offset: { line: 0, column: 0 },
+      map: JSON.parse("" + maps["global"])
+    })
+  }
+
+  if (maps["commonjs"] != null) {
+    output.sections.push({
+      offset: { line: 1, column: 0 },
+      map: JSON.parse("" + maps["commonjs"])
+    })
+  }
 
   var code = fs.readFileSync(path.join(__dirname, "require.js"), { encoding: "utf8" })
 
@@ -167,8 +245,14 @@ Bundle.prototype.get = function () {
     }).join("\n")
   }
 
+  if (self.options.minify) {
+    code = uglify.minify(code, {
+      fromString: true
+    }).code
+  }
+
   return {
     code: code,
-    map: ")]}\n" + output
+    map: ")]}\n" + JSON.stringify(output)
   }
 }

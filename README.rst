@@ -20,7 +20,7 @@ So, what is it, then? It's probably most accurate to call it a `transport format
 
 Basically, it's a simple tool that can be used by *other* tools to make the task of "mush multiple CommonJS files into a single file" easier.
 
-It doesn't handle dependencies, it doesn't minify your files, it just takes JavaScript code + source maps and returns JavaScript code + a source map. That's it.
+It just takes JavaScript code + source maps and returns JavaScript code + a source map. That's it.
 
 Some features:
 
@@ -140,16 +140,19 @@ You can combine them together like this:
 
   var loader = require("js-loader")
 
-  // `file` is the filename for the bundled code
-  // `map`  is the filename for the bundled source map
-  var bundle = new loader.Bundle({ file: "bundle.js", map: "bundle.js.map" })
+  var bundle = new loader.Bundle({
+    file:   "bundle.js",      // The filename for the bundled code
+    map:    "bundle.js.map",  // The filename for the bundled source map
+    minify: false,            // Whether to minify the code or not; the default is true
+    warn:   true              // Whether to display warnings; the default is false
+  })
 
   // 1st argument is the type, which is either "commonjs" or "global"
   // 2nd argument is the module name
   bundle.add("commonjs", "foo", {
-    file: "foo.js",        // The file where the JavaScript code is located; defaults to the module name + ".js"
+    file: "foo.js",        // The file where the JavaScript code is located; the default is the module name + ".js"
     source: {
-      file: "foo.coffee",  // The original filename, corresponds to the "sources" in the source map; defaults to the file
+      file: "foo.coffee",  // The original filename, corresponds to the "sources" in the source map; defaults to file
       map: {               // A source map; optional, but if used, must have a file and/or code property
         file: "foo.map"    // The file where the source map is located
       }
@@ -194,26 +197,6 @@ And the output is:
     {"version":3,"file":"bundle.js","sources":["foo.coffee","bar.coffee"],"names":[],"mappings":";ACAA,ADAA;CCAA,ADAA,CCAA,CAAA,GAAM,ADAN,EAAA,CCAc;CACZ,EAAI,QAAJ;CADF,ADAA,CAAE,CCAW,ADAH,IAAA;CCAV;CDAA,CACE,CAAQ,IAAA;;CADV,CAEA,CAAA,IAAO,EAAQ;CACT,EAAJ,QAAA;CAHF,EAEc;CAFd","sourcesContent":["{ bar } = require \"./bar\"\n{ qux } = require \"./qux\"\nexports.foo = (x) ->\n  bar(x) + qux(x) + 10","window.bar = (x) ->\n  x + 20"]}
 
 You can then include ``<script src="bundle.js"></script>`` in your HTML page, which will Just Work(tm), including with source maps.
-
-*Note:* the above does not do any minification. You can use the ``transform`` option to transform the individual files (e.g. minify them):
-
-.. code:: javascript
-
-  var bundle = new loader.Bundle({
-    transform: function (x) {
-      x.type             // Module type, the 1st argument to `add`
-      x.name             // Module name, the 2nd argument to `add`
-      x.file             // Filename of JavaScript code
-      x.code             // JavaScript code as a string
-      x.source.file      // Filename of original code
-      x.source.code      // Original code as a string
-      x.source.map       // Source map; is undefined if the file doesn't have a source map
-      x.source.map.file  // Filename of source map
-      x.source.map.code  // Source map as a JSON object
-    }
-  })
-
-You should also minify the ``bundle.js`` file and gzip it (probably using `UglifyJS <https://github.com/mishoo/UglifyJS2>`_ and `zlib <http://nodejs.org/api/zlib.html>`_). This will result in the smallest file size, for super fast downloading!
 
 If you prefer to work with JavaScript code as strings (rather than as files), you can do this instead:
 

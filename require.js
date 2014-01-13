@@ -70,7 +70,7 @@ var require
         } else if (m.type === "global") {
           cache[s] = top
           // TODO Use top.eval ?
-          (0, eval)(m.value)
+          ;(0, eval)(m.value)
 
         } else {
           throw new Error("invalid module type: " + m.type)

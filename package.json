@@ -3,7 +3,7 @@
   "name": "js-loader",
   "description": "A tool that makes it easier to package CommonJS modules into a single script for the browser.",
   "license": "MIT",
-  "version": "5.0.1",
+  "version": "6.0.0",
   "main": "js-loader",
   "repository": {
     "type": "git",
@@ -13,6 +13,7 @@
     "url": "https://github.com/Pauan/js-loader/issues"
   },
   "dependencies": {
-    "source-map": "~0.1.31"
+    "source-map": "~0.1.31",
+    "uglify-js": "~2.4.8"
   }
 }
