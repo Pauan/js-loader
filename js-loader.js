@@ -159,28 +159,12 @@ Bundle.prototype.require = function (module) {
   this.requires.push(module)
 }
 
-Bundle.prototype.writeFiles = function (options) {
-  if (options == null) {
-    options = {}
-  }
-
+Bundle.prototype.writeFiles = function () {
   var self = this
-    , o    = self.get()
+  var o = self.get()
 
-  if (options.gzip) {
-    zlib.gzip(o.code, function (e, code) {
-      if (e) throw e
-      fs.writeFileSync(self.options.file, code)
-    })
-    zlib.gzip(o.map, function (e, map) {
-      if (e) throw e
-      fs.writeFileSync(self.options.map,  map)
-    })
-
-  } else {
-    fs.writeFileSync(self.options.file, o.code)
-    fs.writeFileSync(self.options.map,  o.map)
-  }
+  fs.writeFileSync(self.options.file, o.code)
+  fs.writeFileSync(self.options.map,  o.map)
 }
 
 Bundle.prototype.get = function () {
