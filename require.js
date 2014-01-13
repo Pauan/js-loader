@@ -85,9 +85,10 @@ var require
   }
 
   function makeRequire(path) {
-    return function (s) {
+    var require = function (s) {
       return require1(s, path)
     }
+    return require
   }
 
   top.require = makeRequire([])
