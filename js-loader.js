@@ -33,6 +33,13 @@ function Bundle(options) {
 }
 exports.Bundle = Bundle
 
+function applySourceMap(minified, original) {
+  var map = sourceMap.SourceMapGenerator.fromSourceMap(new sourceMap.SourceMapConsumer(minified))
+  map.applySourceMap(new sourceMap.SourceMapConsumer(original))
+  return map
+}
+exports.applySourceMap = applySourceMap
+
 var types = {
   "commonjs": function (name, code) {
     return "define(" + name + ", " + code + ")"
