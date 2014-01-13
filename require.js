@@ -1,6 +1,8 @@
 var require
-;(function (top, external) {
+;(function (external) {
   "use strict";
+
+  var top = this
 
   var modules = {}
     , cache   = {}
@@ -41,7 +43,7 @@ var require
     }
   }
 
-  function require1(sTop, path) {
+  function load(sTop, path) {
     var p = abs(sTop, path)
       , s = p.join("/")
 
@@ -85,13 +87,12 @@ var require
   }
 
   function makeRequire(path) {
-    var require = function (s) {
-      return require1(s, path)
+    return function require(s) {
+      return load(s, path)
     }
-    return require
   }
 
-  top.require = makeRequire([])
-  top.define  = define
-  top.global  = global
-})(this, require)
+  this.require = makeRequire([])
+  this.define  = define
+  this.global  = global
+}).call(this, require)
