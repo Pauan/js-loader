@@ -175,7 +175,8 @@ You can combine them together like this:
   bundle.require("foo")
 
   // Writes the bundle to the file "bundle.js" and the source map to "bundle.js.map"
-  bundle.writeFiles()
+  // By passing `gzip: true` it will also compress the files with gzip
+  bundle.writeFiles({ gzip: true })
 
 And the output is:
 

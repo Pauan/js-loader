@@ -4,6 +4,7 @@ var sourceMap = require("source-map")
   , uglify    = require("uglify-js")
   , path      = require("path")
   , fs        = require("fs")
+  , zlib      = require("zlib")
 
 // TODO unprintable characters and such
 function escapeString(s) {
@@ -158,10 +159,28 @@ Bundle.prototype.require = function (module) {
   this.requires.push(module)
 }
 
-Bundle.prototype.writeFiles = function () {
-  var o = this.get()
-  fs.writeFileSync(this.options.file, o.code)
-  fs.writeFileSync(this.options.map,  o.map)
+Bundle.prototype.writeFiles = function (options) {
+  if (options == null) {
+    options = {}
+  }
+
+  var self = this
+    , o    = self.get()
+
+  if (options.gzip) {
+    zlib.gzip(o.code, function (e, code) {
+      if (e) throw e
+      fs.writeFileSync(self.options.file, code)
+    })
+    zlib.gzip(o.map, function (e, map) {
+      if (e) throw e
+      fs.writeFileSync(self.options.map,  map)
+    })
+
+  } else {
+    fs.writeFileSync(self.options.file, o.code)
+    fs.writeFileSync(self.options.map,  o.map)
+  }
 }
 
 Bundle.prototype.get = function () {
